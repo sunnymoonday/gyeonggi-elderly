@@ -1,0 +1,315 @@
+<meta charset="utf-8">
+<title>경기도 노인인구 현황</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 상단 기준일 띠 → 경기도 요약 → 시군 표(행 선택) + 선택 시군 상세 → 평택 7개 동 → 출처 */
+:root {
+  --bg: #f4f7f6; --surface: #ffffff; --ink: #18302a; --muted: #5b6f69; --line: #d9e3e0;
+  --accent: #1d6b57; --accent-soft: #e2efeb;
+  --male: #3b6ea8; --female: #c0587c; --pension: #c48a1c; --pension-soft: #f3e6c9;
+  --font-head: "IBM Plex Sans KR", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --font-body: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111916; --surface: #18231f; --ink: #e3ece8; --muted: #9db0aa; --line: #2b3a35;
+  --accent: #5cc3a3; --accent-soft: #1d3a31;
+  --male: #7aa7dc; --female: #e48aaa; --pension: #e2ad48; --pension-soft: #3a2f17; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111916; --surface: #18231f; --ink: #e3ece8; --muted: #9db0aa; --line: #2b3a35;
+  --accent: #5cc3a3; --accent-soft: #1d3a31;
+  --male: #7aa7dc; --female: #e48aaa; --pension: #e2ad48; --pension-soft: #3a2f17; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 40px }
+h1, h2, h3 { font-family: var(--font-head); text-wrap: balance; margin: 0; line-height: 1.3 }
+h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 700 }
+h2 { font-size: 22px; font-weight: 700 }
+h3 { font-size: 16px; font-weight: 600 }
+.num { font-variant-numeric: tabular-nums }
+.muted { color: var(--muted) }
+small, .small { font-size: 13px }
+
+/* 기준일 띠 */
+.dateband { display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted) }
+.dateband b { color: var(--ink); font-weight: 600 }
+.dateband .upd { color: var(--accent); font-weight: 700 }
+header.top { display: grid; gap: 10px; padding-top: 8px }
+header.top p { margin: 0; max-width: 68ch; color: var(--muted) }
+
+/* 요약 */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden }
+.kpi { background: var(--surface); padding: 18px 20px; display: grid; gap: 4px; align-content: start }
+.kpi .label { font-size: 13px; color: var(--muted) }
+.kpi .value { font-family: var(--font-head); font-size: 28px; font-weight: 700 }
+.kpi .value small { font-size: 15px; font-weight: 500; margin-left: 2px }
+.kpi .sub { font-size: 13px; color: var(--muted) }
+.split { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-top: 6px; background: var(--line) }
+.split span { display: block; height: 100% }
+
+section { display: grid; gap: 16px }
+.sechead { display: grid; gap: 4px }
+.sechead p { margin: 0; color: var(--muted); max-width: 72ch }
+
+/* 탭 */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px }
+.tabs button { font: inherit; font-size: 14px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer }
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface) }
+button:focus-visible, tr:focus-visible, th button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+/* 표 */
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface) }
+table { border-collapse: collapse; width: 100%; font-size: 14px; white-space: nowrap }
+th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--line) }
+th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface) }
+thead th { font-weight: 600; color: var(--muted); font-size: 13px; background: var(--surface); vertical-align: bottom }
+thead th button { all: unset; cursor: pointer }
+thead th button::after { content: " ↕"; opacity: .35 }
+thead th[aria-sort="ascending"] button::after { content: " ↑"; opacity: 1 }
+thead th[aria-sort="descending"] button::after { content: " ↓"; opacity: 1 }
+tbody tr { cursor: pointer }
+tbody tr:hover td { background: var(--accent-soft) }
+tbody tr.sel td { background: var(--accent-soft); font-weight: 600 }
+tbody tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--accent) }
+tfoot td { font-weight: 700; border-bottom: 0; border-top: 2px solid var(--line) }
+.bar { display: inline-block; vertical-align: middle; height: 6px; border-radius: 3px; background: var(--accent); margin-left: 8px; opacity: .8 }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600 }
+.pill.hi { background: var(--pension-soft); color: var(--pension) }
+.pill.lo { background: var(--accent-soft); color: var(--accent) }
+
+/* 상세 */
+.detail { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px }
+.detail > div { min-width: 0; display: grid; gap: 12px; align-content: start }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted) }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+.pyr { display: grid; grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr); row-gap: 6px; align-items: center; font-size: 13px }
+.pyr .l { display: flex; justify-content: flex-end; align-items: center; gap: 6px }
+.pyr .r { display: flex; align-items: center; gap: 6px }
+.pyr .c { text-align: center; color: var(--muted) }
+.pyr .b { height: 18px; border-radius: 3px }
+.pyr .hd { font-weight: 600; font-size: 12px }
+.income { display: grid; gap: 10px }
+.ibar { display: flex; height: 26px; border-radius: 5px; overflow: hidden; background: var(--line) }
+.ibar span { display: flex; align-items: center; padding: 0 8px; font-size: 12px; font-weight: 600; color: var(--surface); white-space: nowrap; overflow: hidden }
+.irows { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; font-size: 14px }
+.irows dt { color: var(--muted) } .irows dd { margin: 0; text-align: right }
+
+/* 평택 동 */
+.dongs { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px }
+.dong { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 8px; align-content: start }
+.dong .h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px }
+.dong .big { font-family: var(--font-head); font-size: 24px; font-weight: 700 }
+.agebar { display: flex; height: 10px; border-radius: 3px; overflow: hidden }
+.agebar span { display: block; height: 100% }
+.note { font-size: 13px; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; margin: 0 }
+
+footer { display: grid; gap: 10px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px }
+footer ul { margin: 0; padding-left: 18px; display: grid; gap: 4px }
+footer a { color: var(--accent) }
+
+@media (max-width: 860px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .detail { grid-template-columns: minmax(0, 1fr) }
+}
+@media (max-width: 560px) { .kpi { padding: 14px } .kpi .value { font-size: 21px } }
+@media (max-width: 420px) { .pyr { grid-template-columns: minmax(0, 1fr) 60px minmax(0, 1fr) } }
+</style>
+
+<div class="wrap">
+  <div>
+    <div class="dateband" id="dateband"></div>
+    <header class="top">
+      <h1>경기도 노인인구 현황</h1>
+      <p>경기도 31개 시군의 65세 이상 주민등록 인구를 성별·연령별·소득(기초연금 수급 여부)별로 정리했습니다. 평택시는 원평동·세교동·비전1동·비전2동·동삭동·용이동·신평동을 따로 보여 줍니다.</p>
+    </header>
+  </div>
+
+  <section aria-labelledby="s-sum">
+    <h2 id="s-sum" class="sr" hidden>경기도 요약</h2>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section aria-labelledby="s-sigun">
+    <div class="sechead">
+      <h2 id="s-sigun">시군별 65세 이상 인구</h2>
+      <p>표의 행을 누르면 아래에 그 시군의 성별·연령 구조와 소득 구분이 나옵니다. 열 제목을 누르면 정렬됩니다.</p>
+    </div>
+    <div class="tabs" role="group" aria-label="표 보기 방식" id="tabs">
+      <button type="button" id="v-sex" aria-pressed="true">성별</button>
+      <button type="button" id="v-age" aria-pressed="false">연령별</button>
+      <button type="button" id="v-inc" aria-pressed="false">소득별(기초연금)</button>
+    </div>
+    <div class="detail" id="detail"></div>
+    <div class="tablebox"><table id="sigunTable"></table></div>
+  </section>
+
+  <section aria-labelledby="s-pt">
+    <div class="sechead">
+      <h2 id="s-pt">평택시 주요 7개 동</h2>
+      <p id="ptIntro"></p>
+    </div>
+    <div class="dongs" id="dongs"></div>
+    <div class="tablebox"><table id="dongTable"></table></div>
+    <p class="note">기초연금 수급자 통계는 시군 단위까지만 공개되어 동별 소득 구분은 제공하지 않습니다. 동별 소득 자료가 필요하면 평택시 노인복지과 행정자료(기초연금·기초생활보장 수급자 명부 집계)로 보완할 수 있습니다.</p>
+  </section>
+
+  <footer>
+    <h3>자료 출처와 기준</h3>
+    <ul id="sources"></ul>
+  </footer>
+</div>
+
+<script>
+const D = /*__DATA__*/null;
+const fmt = n => n == null ? "–" : n.toLocaleString("ko-KR");
+const pct = (a, b, d = 1) => b ? (a / b * 100).toFixed(d) : "–";
+const AG = D.ageGroups;
+const AGE_COL = ["#a8d5c6", "#6fb8a1", "#3f977f", "#1f735f", "#0f4d3f"];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const ageSum = (r, g) => r.age[g].m + r.age[g].f;
+
+function nextUpdate(s) {
+  const d = new Date(s + "T00:00:00");
+  return `${d.getMonth() === 11 ? d.getFullYear() + 1 : d.getFullYear()}-${String((d.getMonth() + 1) % 12 + 1).padStart(2, "0")}-01`;
+}
+function ym(s) { const [y, m] = s.split("-"); return `${y}년 ${Number(m)}월 말`; }
+
+/* 기준일 띠 */
+$("dateband").innerHTML =
+  `<span>업데이트 <b class="upd num">${D.updated}</b></span>` +
+  `<span>인구 기준 <b>${ym(D.baseMonth)}</b> (주민등록)</span>` +
+  `<span>기초연금 기준 <b>${ym(D.pensionMonth)}</b></span>` +
+  `<span>다음 업데이트 <b class="num">${nextUpdate(D.updated)}</b> (매월 1일)</span>`;
+
+/* 요약 */
+(() => {
+  const g = D.gyeonggi, p = g.pension;
+  const old85 = ageSum(g, AG[4]), old75 = AG.slice(2).reduce((s, a) => s + ageSum(g, a), 0);
+  $("kpis").innerHTML = `
+  <div class="kpi"><span class="label">경기도 65세 이상</span><span class="value num">${fmt(g.elderly)}<small>명</small></span>
+    <span class="sub">총인구 ${fmt(g.total)}명의 <b>${pct(g.elderly, g.total)}%</b></span></div>
+  <div class="kpi"><span class="label">성별</span><span class="value num">${pct(g.female, g.elderly)}<small>% 여성</small></span>
+    <span class="sub">남 ${fmt(g.male)} · 여 ${fmt(g.female)}</span>
+    <div class="split" aria-hidden="true"><span style="width:${pct(g.male, g.elderly)}%;background:var(--male)"></span><span style="width:${pct(g.female, g.elderly)}%;background:var(--female)"></span></div></div>
+  <div class="kpi"><span class="label">75세 이상 후기고령</span><span class="value num">${fmt(old75)}<small>명</small></span>
+    <span class="sub">노인의 ${pct(old75, g.elderly)}% · 85세 이상 ${fmt(old85)}명</span></div>
+  <div class="kpi"><span class="label">기초연금 수급률 (소득 하위 70% 기준)</span><span class="value num">${p.rate.toFixed(1)}<small>%</small></span>
+    <span class="sub">수급 ${fmt(p.recipients)}명 / 65세 이상 ${fmt(p.pop65)}명</span>
+    <div class="split" aria-hidden="true"><span style="width:${p.rate}%;background:var(--pension)"></span></div></div>`;
+})();
+
+/* 시군 표 */
+let view = "sex", sortKey = "elderly", sortDir = -1, selected = "평택시";
+const VIEWS = {
+  sex: [["총인구", r => r.total], ["65세 이상", r => r.elderly, "bar"], ["고령인구비율(%)", r => r.elderly / r.total * 100, "rate"],
+        ["남", r => r.male], ["여", r => r.female], ["여성 비율(%)", r => r.female / r.elderly * 100, "rate"]],
+  age: [["65세 이상", r => r.elderly], ...AG.map(g => [g, r => ageSum(r, g)]),
+        ["75세 이상 비중(%)", r => AG.slice(2).reduce((s, a) => s + ageSum(r, a), 0) / r.elderly * 100, "rate"]],
+  inc: [["65세 이상(기초연금 기준)", r => r.pension?.pop65], ["기초연금 수급자", r => r.pension?.recipients],
+        ["비수급자", r => r.pension && r.pension.pop65 - r.pension.recipients], ["수급률(%)", r => r.pension?.rate, "pens"]],
+};
+function cell(v, kind, max) {
+  if (v == null) return "–";
+  if (kind === "rate") return v.toFixed(1);
+  if (kind === "pens") return `${v.toFixed(1)} <span class="pill ${v >= 65 ? "hi" : v < 50 ? "lo" : ""}">${v >= 65 ? "높음" : v < 50 ? "낮음" : ""}</span>`.replace(' <span class="pill "></span>', "");
+  if (kind === "bar") return `${fmt(v)}<span class="bar" style="width:${Math.round(v / max * 60)}px"></span>`;
+  return fmt(Math.round(v));
+}
+function renderTable() {
+  const cols = VIEWS[view];
+  const rows = [...D.siguns];
+  const keyFn = sortKey === "name" ? null : (cols.find(c => c[0] === sortKey) || cols[0])[1];
+  if (!keyFn && sortKey !== "name") sortKey = cols[0][0];
+  rows.sort((a, b) => sortKey === "name" ? sortDir * a.name.localeCompare(b.name, "ko") : sortDir * ((keyFn(a) ?? -1) - (keyFn(b) ?? -1)));
+  const max = Math.max(...D.siguns.map(r => r.elderly));
+  const th = (label, key) => `<th scope="col" aria-sort="${sortKey === key ? (sortDir > 0 ? "ascending" : "descending") : "none"}"><button type="button" data-k="${esc(key)}">${esc(label)}</button></th>`;
+  const g = D.gyeonggi;
+  $("sigunTable").innerHTML =
+    `<thead><tr>${th("시군", "name")}${cols.map(c => th(c[0], c[0])).join("")}</tr></thead>` +
+    `<tbody>${rows.map(r => `<tr tabindex="0" data-n="${esc(r.name)}" class="${r.name === selected ? "sel" : ""}"><td>${esc(r.name)}</td>${cols.map(c => `<td class="num">${cell(c[1](r), c[2], max)}</td>`).join("")}</tr>`).join("")}</tbody>` +
+    `<tfoot><tr><td>경기도 계</td>${cols.map(c => `<td class="num">${cell(c[1](g), c[2] === "bar" ? null : c[2], max)}</td>`).join("")}</tr></tfoot>`;
+}
+$("sigunTable").addEventListener("click", e => {
+  const b = e.target.closest("th button");
+  if (b) { const k = b.dataset.k; sortDir = sortKey === k ? -sortDir : (k === "name" ? 1 : -1); sortKey = k; renderTable(); return; }
+  const tr = e.target.closest("tbody tr"); if (tr) select(tr.dataset.n);
+});
+$("sigunTable").addEventListener("keydown", e => {
+  const tr = e.target.closest("tbody tr"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(tr.dataset.n); }
+});
+["sex", "age", "inc"].forEach(v => $("v-" + v).addEventListener("click", () => {
+  view = v; sortKey = VIEWS[v][0][0]; sortDir = -1;
+  ["sex", "age", "inc"].forEach(x => $("v-" + x).setAttribute("aria-pressed", x === v));
+  renderTable();
+}));
+function select(name) {
+  selected = name; renderTable(); renderDetail();
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $("detail").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+}
+
+/* 상세: 성·연령 피라미드 + 소득 구분 */
+function pyramid(r) {
+  const max = Math.max(...AG.flatMap(g => [r.age[g].m, r.age[g].f]));
+  return `<div class="pyr"><span class="l hd" style="color:var(--male)">남</span><span class="c hd">연령</span><span class="r hd" style="color:var(--female)">여</span>` +
+    [...AG].reverse().map(g => {
+      const a = r.age[g];
+      return `<span class="l num">${fmt(a.m)}<span class="b" style="width:${a.m / max * 100}%;background:var(--male)"></span></span>` +
+        `<span class="c">${g}</span>` +
+        `<span class="r num"><span class="b" style="width:${a.f / max * 100}%;background:var(--female)"></span>${fmt(a.f)}</span>`;
+    }).join("") + `</div>`;
+}
+function renderDetail() {
+  const r = D.siguns.find(x => x.name === selected), p = r.pension;
+  const inc = p ? `
+    <div class="ibar" role="img" aria-label="기초연금 수급 ${p.rate}%">
+      <span style="width:${p.rate}%;background:var(--pension)">수급 ${p.rate.toFixed(1)}%</span>
+      <span style="width:${100 - p.rate}%;background:var(--muted)">비수급 ${(100 - p.rate).toFixed(1)}%</span></div>
+    <dl class="irows num">
+      <dt>기초연금 수급자 (소득인정액 하위 70% 이내)</dt><dd>${fmt(p.recipients)}명</dd>
+      <dt>비수급자 (선정기준 초과·미신청 등)</dt><dd>${fmt(p.pop65 - p.recipients)}명</dd>
+      <dt>65세 이상 (보건복지부 집계)</dt><dd>${fmt(p.pop65)}명</dd>
+      <dt>경기도 평균 수급률</dt><dd>${D.gyeonggi.pension.rate.toFixed(1)}%</dd></dl>` : `<p class="muted">기초연금 자료 없음</p>`;
+  $("detail").innerHTML = `
+    <div><h3>${esc(r.name)} 성별·연령 구조 <span class="muted small">${ym(D.baseMonth)}</span></h3>
+      <div class="legend"><span><i style="background:var(--male)"></i>남 ${fmt(r.male)}명</span><span><i style="background:var(--female)"></i>여 ${fmt(r.female)}명</span><span>고령인구비율 ${pct(r.elderly, r.total)}%</span></div>
+      ${pyramid(r)}</div>
+    <div><h3>${esc(r.name)} 소득 구분 <span class="muted small">${ym(D.pensionMonth)}</span></h3>
+      <div class="legend"><span><i style="background:var(--pension)"></i>기초연금 수급</span><span><i style="background:var(--muted)"></i>비수급</span></div>
+      ${inc}</div>`;
+}
+
+/* 평택 동 */
+(() => {
+  const pt = D.pyeongtaek, ds = D.ptDongs, sum = ds.reduce((s, d) => s + d.elderly, 0);
+  $("ptIntro").textContent = `평택시 65세 이상 ${fmt(pt.elderly)}명 중 7개 동에 ${fmt(sum)}명(${pct(sum, pt.elderly)}%)이 살고 있습니다. 막대는 동별 노인의 연령 구성입니다.`;
+  $("dongs").innerHTML = ds.map(d => `
+    <div class="dong">
+      <div class="h"><h3>${esc(d.name)}</h3><span class="muted small num">고령비율 ${pct(d.elderly, d.total)}%</span></div>
+      <div class="big num">${fmt(d.elderly)}<span class="muted small"> 명 / 총 ${fmt(d.total)}명</span></div>
+      <div class="small num"><span style="color:var(--male)">남 ${fmt(d.male)}</span> · <span style="color:var(--female)">여 ${fmt(d.female)}</span></div>
+      <div class="agebar" role="img" aria-label="${esc(d.name)} 연령 구성">${AG.map((g, i) => `<span title="${g} ${fmt(ageSum(d, g))}명" style="width:${ageSum(d, g) / d.elderly * 100}%;background:${AGE_COL[i]}"></span>`).join("")}</div>
+    </div>`).join("");
+  const legend = `<div class="legend">${AG.map((g, i) => `<span><i style="background:${AGE_COL[i]}"></i>${g}</span>`).join("")}</div>`;
+  $("dongs").insertAdjacentHTML("afterend", legend);
+  const row = (d, tag = "td") => `<${tag === "th" ? "tr" : "tr"}><td>${esc(d.name)}</td><td class="num">${fmt(d.total)}</td><td class="num">${fmt(d.elderly)}</td><td class="num">${pct(d.elderly, d.total)}</td><td class="num">${fmt(d.male)}</td><td class="num">${fmt(d.female)}</td>${AG.map(g => `<td class="num">${fmt(ageSum(d, g))}</td>`).join("")}</tr>`;
+  const tot = { name: "7개 동 계", total: ds.reduce((s, d) => s + d.total, 0), elderly: sum, male: ds.reduce((s, d) => s + d.male, 0), female: ds.reduce((s, d) => s + d.female, 0),
+    age: Object.fromEntries(AG.map(g => [g, { m: ds.reduce((s, d) => s + d.age[g].m, 0), f: ds.reduce((s, d) => s + d.age[g].f, 0) }])) };
+  $("dongTable").innerHTML = `<thead><tr><th>동</th><th>총인구</th><th>65세 이상</th><th>고령비율(%)</th><th>남</th><th>여</th>${AG.map(g => `<th>${g}</th>`).join("")}</tr></thead>` +
+    `<tbody style="cursor:default">${ds.map(d => row(d)).join("")}</tbody><tfoot>${row(tot)}${row({ ...pt, name: "평택시 전체" })}</tfoot>`;
+  $("dongTable").querySelectorAll("tbody tr").forEach(tr => tr.style.cursor = "default");
+})();
+
+/* 출처 */
+$("sources").innerHTML = `
+  <li>인구(성별·연령): 행정안전부 주민등록 인구통계 「연령별 인구현황」 ${ym(D.baseMonth)} 기준, 읍면동 단위 — <a href="https://jumin.mois.go.kr/ageStatMonth.do" target="_blank" rel="noopener">jumin.mois.go.kr</a>. 거주불명자·재외국민 포함 전체 주민등록인구.</li>
+  <li>소득 구분: 보건복지부 「기초연금 인구·수급률 현황」 ${ym(D.pensionMonth)} 기준, 시군 단위 — <a href="https://www.data.go.kr/data/15161618/fileData.do" target="_blank" rel="noopener">공공데이터포털 15161618</a>. 기초연금은 소득인정액이 선정기준액 이하인 65세 이상(하위 약 70%)에게 지급되므로 수급자를 '저소득·중위소득층', 비수급자를 '상위 소득층'의 근사치로 봅니다. 비수급자에는 미신청자와 직역연금 수급자 등 지급 제외자도 들어 있습니다.</li>
+  <li>기초연금 자료의 65세 이상 인구는 보건복지부 집계 기준이어서 주민등록 인구와 다소 차이가 납니다. 수급률은 같은 자료 안에서 계산했습니다.</li>
+  <li>매월 1일 자동 갱신: 행정안전부가 공개한 가장 최근 월 자료를 받아 다시 만듭니다. 기초연금 파일은 공공데이터포털에 새 파일이 올라오면 함께 반영합니다.</li>`;
+
+renderTable(); renderDetail();
+</script>
